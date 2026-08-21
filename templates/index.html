@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CyberGuard Pro | Malware Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #6a11cb;
+      --primary-dark: #4a00e0;
+      --secondary: #00c9ff;
+      --safe: #00c853;
+      --malicious: #ff1744;
+      --dark-bg: #0c0c1c;
+      --card-bg: rgba(18, 18, 37, 0.9);
+      --text-light: #f0f0f0;
+      --text-muted: #a0a0c0;
+      --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--dark-bg) 0%, #121230 100%), 
+                  radial-gradient(circle at top left, rgba(106,17,203,0.3) 0%, transparent 40%),
+                  radial-gradient(circle at bottom right, rgba(0,201,255,0.2) 0%, transparent 40%);
+      background-size: cover;
+      background-attachment: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text-light);
+      font-family: 'Inter', sans-serif;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(106,17,203,0.1) 0%, transparent 15%),
+        radial-gradient(circle at 80% 70%, rgba(0,201,255,0.1) 0%, transparent 15%),
+        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="none"/><path d="M0,50 L100,50 M50,0 L50,100" stroke="rgba(160,160,192,0.05)" stroke-width="1"/><circle cx="20" cy="20" r="2" fill="rgba(160,160,192,0.05)"/><circle cx="80" cy="80" r="2" fill="rgba(160,160,192,0.05)"/></svg>');
+      background-size: 300px;
+      z-index: 0;
+    }
+
+    .scanner-container {
+      background: var(--card-bg);
+      backdrop-filter: blur(15px);
+      border-radius: 24px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 
+                  0 0 0 1px var(--glass-border);
+      width: 100%;
+      max-width: 900px;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      transform: translateY(0);
+      transition: transform 0.3s ease;
+    }
+
+    .scanner-container:hover {
+      transform: translateY(-5px);
+    }
+
+    .scanner-header {
+      padding: 35px 40px 25px;
+      text-align: center;
+      background: linear-gradient(to right, rgba(106,17,203,0.3), rgba(74,0,224,0.2));
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .logo-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(106, 17, 203, 0.5);
+    }
+
+    .logo-icon i {
+      font-size: 24px;
+      color: white;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #bb86fc, #8e2de2);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 5px;
+    }
+
+    .subtext {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      font-weight: 400;
+      max-width: 400px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    .scanner-content {
+      padding: 30px 40px 40px;
+    }
+
+    .upload-section {
+      margin-bottom: 30px;
+    }
+
+    .upload-box {
+      border: 2px dashed var(--primary);
+      padding: 35px 20px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+
+    .upload-box::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(106,17,203,0.1), transparent);
+      transform: rotate(45deg);
+      z-index: 0;
+      animation: scanLine 6s linear infinite;
+    }
+
+    .upload-box.dragover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: #d0aaff;
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      color: var(--primary);
+      margin-bottom: 15px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .upload-text {
+      font-size: 1.2rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .upload-subtext {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      display: none;
+    }
+
+    .file-info.visible {
+      display: block;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .file-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1rem;
+      margin-bottom: 5px;
+    }
+
+    .file-name i {
+      color: var(--primary);
+    }
+
+    .file-meta {
+      display: flex;
+      gap: 15px;
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .custom-file-btn {
+      padding: 14px 30px;
+      font-size: 1.05rem;
+      background: linear-gradient(to right, var(--primary), var(--primary-dark));
+      color: #fff;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 5px 20px rgba(106, 17, 203, 0.4);
+      position: relative;
+      z-index: 1;
+    }
+
+    .custom-file-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(106, 17, 203, 0.6);
+    }
+
+    .custom-file-btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-container {
+      text-align: center;
+      margin-top: 25px;
+    }
+
+    .result-container {
+      margin-top: 30px;
+      padding: 25px;
+      border-radius: 16px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      border-left: 4px solid transparent;
+      background: rgba(255, 255, 255, 0.05);
+      display: none;
+    }
+
+    .result-container.visible {
+      display: flex;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.3rem;
+    }
+
+    .result-content {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .result-footer {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      font-weight: normal;
+    }
+
+    .benign {
+      border-left-color: var(--safe);
+      background: rgba(0, 200, 100, 0.08);
+    }
+
+    .malware {
+      border-left-color: var(--malicious);
+      background: rgba(255, 0, 80, 0.08);
+    }
+
+    .benign .result-icon {
+      color: var(--safe);
+    }
+
+    .malware .result-icon {
+      color: var(--malicious);
+    }
+
+    .security-features {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      margin-top: 35px;
+      padding-top: 25px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .feature i {
+      color: var(--primary);
+    }
+
+    .malware {
+  color: var(--malicious);
+  font-weight: bold;
+}
+.benign {
+  color: var(--safe);
+  font-weight: bold;
+}
+
+    .clear-btn {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--glass-border);
+      padding: 8px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+      margin-top: 15px;
+    }
+
+    .clear-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-light);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes scanLine {
+      0% {
+        transform: rotate(45deg) translate(-30%, -30%);
+      }
+      100% {
+        transform: rotate(45deg) translate(30%, 30%);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .scanner-header {
+        padding: 25px 20px 15px;
+      }
+      
+      .scanner-content {
+        padding: 20px 25px 30px;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      .subtext {
+        font-size: 1rem;
+      }
+      
+      .upload-box {
+        padding: 25px 15px;
+      }
+      
+      .upload-icon {
+        font-size: 40px;
+      }
+      
+      .upload-text {
+        font-size: 1.1rem;
+      }
+      
+      .custom-file-btn {
+        padding: 12px 25px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="scanner-container">
+    <div class="scanner-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <h1>CyberGuard Pro</h1>
+      </div>
+      <p class="subtext">Advanced AI-powered malware detection with enterprise-grade security</p>
+    </div>
+    
+    <div class="scanner-content">
+      <form method="POST" enctype="multipart/form-data" id="scannerForm">
+        <div class="upload-section">
+          <div class="upload-box" id="drop-zone">
+            <div class="upload-icon">
+              <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <p class="upload-text">Drag & Drop or Click to Upload File</p>
+            <p class="upload-subtext">Supports: EXE, DLL, MSI, SYS | Max: 50MB</p>
+            <input type="file" name="file" id="fileInput" required />
+          </div>
+          
+          <div class="file-info" id="fileInfo">
+            <div class="file-name">
+              <i class="fas fa-file"></i>
+              <span id="fileName">No file selected</span>
+            </div>
+            <div class="file-meta">
+              <span><i class="fas fa-hdd"></i> <span id="fileSize">0 KB</span></span>
+              <span><i class="fas fa-clock"></i> Scanned just now</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="btn-container">
+          <button type="submit" class="custom-file-btn">
+            <i class="fas fa-search"></i> Scan for Malware
+          </button>
+          <button type="button" class="clear-btn" id="clearBtn">
+            <i class="fas fa-times"></i> Clear Results
+          </button>
+        </div>
+      </form>
+      
+      <div class="result-container" id="resultContainer">
+        <div class="result-header">
+          <i class="fas fa-clipboard-check result-icon"></i>
+          <span>Scan Result:</span>
+        </div>
+        <div class="result-content" id="resultContent">
+         <strong id="predictionText" class="{{ 'malware' if prediction == 'Malware' else 'benign' }}">
+  {{ prediction }}
+</strong>
+
+        </div>
+        <div class="result-footer">
+          <i class="fas fa-info-circle"></i> This result is based on deep file analysis using machine learning
+        </div>
+      </div>
+      
+      <div class="security-features">
+        <div class="feature">
+          <i class="fas fa-shield-virus"></i>
+          <span>Real-time Analysis</span>
+        </div>
+        <div class="feature">
+          <i class="fas fa-robot"></i>
+          <span>AI-Powered Detection</span>
+        </div>
+        <div class="feature">
+          <i class="fas fa-bolt"></i>
+          <span>Fast Scanning</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const dropZone = document.getElementById("drop-zone");
+      const fileInput = document.getElementById("fileInput");
+      const fileNameDisplay = document.getElementById("fileName");
+      const fileInfo = document.getElementById("fileInfo");
+      const fileSizeDisplay = document.getElementById("fileSize");
+      const resultContainer = document.getElementById("resultContainer");
+      const resultContent = document.getElementById("resultContent");
+      const predictionText = document.getElementById("predictionText");
+      const clearBtn = document.getElementById("clearBtn");
+      const scannerForm = document.getElementById("scannerForm");
+      
+      // Allow clicking the drop-zone to open the file input dialog
+dropZone.addEventListener("click", () => {
+  fileInput.click();
+});
+
+      // Check if there's a previous scan result
+      const previousResult = "{{ prediction }}";
+      const previousFilename = "{{ filename }}";
+      
+      if (previousResult) {
+        // Show file info
+        fileNameDisplay.textContent = previousFilename || "Previously scanned file";
+        fileInfo.classList.add('visible');
+        fileSizeDisplay.textContent = "24.5 KB"; // Simulated size
+        
+        // Show result
+        resultContainer.classList.add('visible');
+        resultContainer.classList.add(previousResult.includes('MALWARE') ? 'malware' : 'benign');
+        predictionText.textContent = previousResult;
+        
+        // Style based on result
+        if (previousResult.includes('MALWARE')) {
+          predictionText.style.color = "var(--malicious)";
+          resultContent.innerHTML = `This file is <strong style="color: var(--malicious)">${previousResult}</strong>`;
+        } else {
+          predictionText.style.color = "var(--safe)";
+          resultContent.innerHTML = `This file is <strong style="color: var(--safe)">${previousResult}</strong>`;
+        }
+      }
+      
+      // File input change handler
+      fileInput.addEventListener("change", () => {
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          fileNameDisplay.textContent = file.name;
+          
+          // Format file size
+          const sizeInKB = (file.size / 1024).toFixed(1);
+          fileSizeDisplay.textContent = `${sizeInKB} KB`;
+          
+          // Show file info
+          fileInfo.classList.add('visible');
+          
+          // Update drop zone style
+          dropZone.classList.add('dragover');
+          setTimeout(() => dropZone.classList.remove('dragover'), 1000);
+        }
+      });
+      
+      // Drag and drop handlers
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("dragover");
+      });
+      
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("dragover");
+      });
+      
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("dragover");
+        
+        if (e.dataTransfer.files.length) {
+          fileInput.files = e.dataTransfer.files;
+          const event = new Event('change');
+          fileInput.dispatchEvent(event);
+        }
+      });
+      
+      // Clear button handler
+      clearBtn.addEventListener("click", () => {
+        // Reset form
+        scannerForm.reset();
+        
+        // Hide file info
+        fileInfo.classList.remove('visible');
+        
+        // Hide result
+        resultContainer.classList.remove('visible');
+        
+        // Reset file name
+        fileNameDisplay.textContent = "No file selected";
+      });
+      
+      // Form submission handler
+      scannerForm.addEventListener("submit", function(e) {
+        // Show scanning state
+        if (fileInput.files.length > 0) {
+          resultContainer.classList.add('visible');
+          resultContainer.className = 'result-container visible';
+          resultContent.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing file for threats...';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
